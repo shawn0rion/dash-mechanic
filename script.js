@@ -8,6 +8,7 @@ let moleCount = 0;
 const moleLimit = 10;
 const timeLimit = 10000;
 let loadedImages = [];
+let moleId = "";
 
 function randomNumber(n) {
   return Math.floor(Math.random() * n);
@@ -38,10 +39,10 @@ const map = {
   grid: [],
 };
 
-// define consants
+// define variables
 const { tileSize, w, h } = map;
-const numColumns = Math.floor(w / tileSize);
-const numRows = Math.floor(h / tileSize);
+let numColumns = Math.floor(w / tileSize);
+let numRows = Math.floor(h / tileSize);
 
 const player = {
   lives: 3,
@@ -51,7 +52,8 @@ const player = {
   h: 64,
   dx: 0,
   dy: 0,
-  speed: 2,
+  prevPosition: { x: 0, y: 0 },
+  speed: 1,
   dashMultiplier: 5,
   dashCount: 3,
   dashCooldown: 3000,
@@ -445,6 +447,25 @@ function animate() {
   }
 }
 
+function setCanvasDimensions() {
+  // Determine smallest side of the screen
+  const minDimension = Math.min(window.innerWidth, window.innerHeight);
+
+  // Determine the largest multiple of 32 that is smaller than the smallest side
+  const largestMultiple = minDimension - (minDimension % 32);
+
+  // Set the canvas dimensions
+  canvas.width = largestMultiple;
+  canvas.height = largestMultiple;
+
+  // Recalculate grid after resizing
+  numColumns = Math.floor(canvas.width / tileSize);
+  numRows = Math.floor(canvas.height / tileSize);
+
+  // Reinitialize the game
+  init();
+}
+
 function gameLoop() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   updatePlayer();
@@ -459,10 +480,28 @@ function gameLoop() {
   // set interval for mole generation
   requestAnimationFrame(gameLoop);
 }
-preloadImages().then(() => {
+
+function init() {
+  map.grid = [];
+  player.speed = 1.5;
   player.sprite = loadedImages.rest;
-  // all images are loaded, start game
+  clearInterval(moleId);
+  map.w = canvas.width;
+  map.h = canvas.height;
+  numColumns = Math.floor(canvas.width / tileSize);
+  numRows = Math.floor(canvas.height / tileSize);
+  moles = [];
   generateTiles();
-  setInterval(generateMole, 1000);
+  moleId = setInterval(generateMole, 1000);
   gameLoop();
+}
+
+preloadImages().then(() => {
+  // setCanvasDimensions();
+  init();
 });
+
+// On page load
+
+// When the window is resized
+window.addEventListener("resize", setCanvasDimensions);
